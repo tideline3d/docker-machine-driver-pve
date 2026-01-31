@@ -243,14 +243,32 @@ jobs:
           echo "Publishing to GitHub Pages for: ${GITHUB_REPOSITORY}"
           echo "This is your fork, not the upstream repository"
           
-          git checkout gh-pages --force
-          && helm repo index ./release_artifacts --merge ./index.yaml --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}"
-          && cp ./release_artifacts/index.yaml ./index.yaml
-          && git add ./index.yaml
-          && mkdir -p "./extensions/pve-node-driver/${{ steps.version.outputs.version }}/plugin"
-          && cp ./dist-pkg/pve-node-driver-${{ steps.version.outputs.version }}/* "extensions/pve-node-driver/${{ steps.version.outputs.version }}/plugin"
-          && (cd "extensions/pve-node-driver/${{ steps.version.outputs.version }}" && find * -type f | sort) > "extensions/pve-node-driver/${{ steps.version.outputs.version }}/files.txt"
-          && git add "extensions/pve-node-driver/${{ steps.version.outputs.version }}"
-          && git commit -m "chore: update Helm repo index for ${{ steps.version.outputs.release_tag }}"
-          && echo "Pushing to origin (your fork's gh-pages branch)..."
-          && git push origin gh-pages
+          # Check if gh-pages branch exists
+          if git ls-remote --heads origin gh-pages | grep gh-pages; then
+            echo "gh-pages branch exists, checking it out..."
+            git fetch origin gh-pages
+            git checkout gh-pages
+          else
+            echo "gh-pages branch does not exist, creating it..."
+            git checkout --orphan gh-pages
+            git rm -rf .
+            echo "# GitHub Pages for ${GITHUB_REPOSITORY}" > README.md
+            git add README.md
+            git commit -m "chore: initialize gh-pages branch"
+            git push origin gh-pages
+          fi
+          
+          # Now update with the new artifacts
+          helm repo index ./release_artifacts --merge ./index.yaml --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}" || helm repo index ./release_artifacts --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}"
+          cp ./release_artifacts/index.yaml ./index.yaml
+          git add ./index.yaml
+          
+          mkdir -p "./extensions/pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          cp ./dist-pkg/pve-node-driver-${{ steps.version.outputs.version }}/* "extensions/pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          (cd "extensions/pve-node-driver/${{ steps.version.outputs.version }}" && find * -type f | sort) > "extensions/pve-node-driver/${{ steps.version.outputs.version }}/files.txt"
+          git add "extensions/pve-node-driver/${{ steps.version.outputs.version }}"
+          
+          git commit -m "chore: update Helm repo index for ${{ steps.version.outputs.release_tag }}"
+          
+          echo "Pushing to origin (your fork's gh-pages branch)..."
+          git push origin gh-pages
