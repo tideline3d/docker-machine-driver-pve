@@ -13,6 +13,36 @@ entries:
       catalog.cattle.io/ui-component: plugins
       catalog.cattle.io/ui-extensions-version: '>= 3.0.0 < 4.0.0'
     apiVersion: v2
+    appVersion: continuous-multi-nic-125
+    created: "2026-01-31T22:05:07.843582868Z"
+    description: Node Driver for Proxmox Virtual Environment (jrytio fork).
+    digest: 50a43a879f85ab6b32b83bcc9260f1e07d924d11ed3c2d673dd9345416a3409b
+    home: https://github.com/tideline3d/docker-machine-driver-pve
+    keywords:
+    - infrastructure
+    maintainers:
+    - email: contact@stellatarum.com
+      name: Tideline3D
+      url: https://stellatarum.com/
+    name: jrytio-pve-node-driver
+    sources:
+    - https://github.com/tideline3d/docker-machine-driver-pve
+    type: application
+    urls:
+    - https://github.com/tideline3d/docker-machine-driver-pve/releases/download/continuous-multi-nic-125/jrytio-pve-node-driver-0.0.0-multi-nic.125.tgz
+    version: 0.0.0-multi-nic.125
+  - annotations:
+      catalog.cattle.io/display-name: Proxmox VE Node Driver (jrytio)
+      catalog.cattle.io/kube-version: '>= 1.16.0-0'
+      catalog.cattle.io/namespace: cattle-ui-plugin-system
+      catalog.cattle.io/os: linux
+      catalog.cattle.io/permits-os: linux, windows
+      catalog.cattle.io/rancher-version: '>= 2.10.0-0'
+      catalog.cattle.io/release-name: jrytio-pve-node-driver
+      catalog.cattle.io/scope: management
+      catalog.cattle.io/ui-component: plugins
+      catalog.cattle.io/ui-extensions-version: '>= 3.0.0 < 4.0.0'
+    apiVersion: v2
     appVersion: continuous-multi-nic-124
     created: "2026-01-31T21:43:09.899169902Z"
     description: Node Driver for Proxmox Virtual Environment (jrytio fork).
@@ -122,4 +152,4 @@ entries:
     urls:
     - https://github.com/tideline3d/docker-machine-driver-pve/releases/download/continuous-multi-nic-119/pve-node-driver-0.0.0-multi-nic.119.tgz
     version: 0.0.0-multi-nic.119
-generated: "2026-01-31T21:43:09.898428455Z"
+generated: "2026-01-31T22:05:07.843183103Z"

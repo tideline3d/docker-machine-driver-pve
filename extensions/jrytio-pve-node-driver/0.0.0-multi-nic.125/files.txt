@@ -1,0 +1,15 @@
+files.txt
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.37.js
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.37.js.map
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.686.js
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.686.js.map
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.800.js
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.800.js.map
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.cloud-credential.js
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.cloud-credential.js.map
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.js
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.js.map
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.machine-config.js
+plugin/jrytio-pve-node-driver-0.0.0-multi-nic.125.umd.min.machine-config.js.map
+plugin/package.json
+plugin/report.html
