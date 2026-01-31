@@ -1,0 +1,180 @@
+name: Continuous Release
+
+on:
+  push:
+    branches:
+      - '**'  # All branches
+    tags-ignore:
+      - '**'  # Don't run on tags (use release.yml for those)
+
+concurrency:
+  group: continuous-release-${{ github.ref }}
+  cancel-in-progress: true  # Cancel old builds for same branch
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Continuous Build
+    runs-on: ubuntu-latest
+    steps:
+      # Set-up git
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for git describe
+
+      - run: >
+          git config user.name 'github-actions[bot]'
+          && git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      # Generate version number
+      - name: Generate version
+        id: version
+        run: |
+          # Get latest tag and strip 'v' prefix
+          BASE_VERSION_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 HEAD 2>/dev/null || echo "v0.0.0")
+          BASE_VERSION=${BASE_VERSION_TAG#v}
+
+          # Strip pre-release suffix (e.g., -rc2, -alpha, -beta) to get clean base version
+          BASE_VERSION=$(echo "$BASE_VERSION" | sed 's/-.*$//')
+
+          # Count commits since that tag
+          BUILD_NUMBER=$(git rev-list --count ${BASE_VERSION_TAG}..HEAD)
+
+          # Sanitize branch name for semver compatibility
+          BRANCH_NAME="${GITHUB_REF_NAME}"
+          SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | sed 's|refs/heads/||' | tr '/_[:upper:]' '---[:lower:]' | sed 's/^-*//' | sed 's/-*$//' | sed 's/-\+/-/g')
+
+          # Construct version string
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            # Main branch: use build metadata
+            VERSION="${BASE_VERSION}+${BUILD_NUMBER}"
+            RELEASE_TAG="continuous-main-${BUILD_NUMBER}"
+            IS_PRERELEASE="false"
+          else
+            # Feature branch: use pre-release identifier
+            VERSION="${BASE_VERSION}-${SANITIZED_BRANCH}.${BUILD_NUMBER}"
+            RELEASE_TAG="continuous-${SANITIZED_BRANCH}-${BUILD_NUMBER}"
+            IS_PRERELEASE="true"
+          fi
+
+          # Output variables for later steps
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "release_tag=${RELEASE_TAG}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "sanitized_branch=${SANITIZED_BRANCH}" >> $GITHUB_OUTPUT
+
+          # Log for debugging
+          echo "Base Version Tag: ${BASE_VERSION_TAG}"
+          echo "Base Version: ${BASE_VERSION}"
+          echo "Build Number: ${BUILD_NUMBER}"
+          echo "Branch Name: ${BRANCH_NAME}"
+          echo "Sanitized Branch: ${SANITIZED_BRANCH}"
+          echo "Full Version: ${VERSION}"
+          echo "Release Tag: ${RELEASE_TAG}"
+          echo "Is Prerelease: ${IS_PRERELEASE}"
+
+      # Set-up build environment
+      - name: Install Helm
+        uses: azure/setup-helm@v4.3.0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Pull Go dependencies
+        run: go mod vendor
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Pull Node dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install go-licenses
+        run: >
+          mkdir -p ./tools
+          && export GOBIN="$(realpath ./tools)"
+          && go install github.com/google/go-licenses@v1.6.0
+
+      # Build release artifacts
+      - run: mkdir -p ./release_artifacts
+
+      - name: Build driver binaries
+        run: >
+          go build -o ./release_artifacts/docker-machine-driver-pve ./cmd/docker-machine-driver-pve
+          && (cd ./release_artifacts && sha256sum ./docker-machine-driver-pve > checksums.txt)
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+          GOARCH: amd64
+
+      - name: Build Rancher UI Extension
+        run: >
+          (cd pkg/pve-node-driver && yarn version --new-version "${{ steps.version.outputs.version }}" --no-git-tag-version)
+          && yarn build-pkg pve-node-driver
+
+      - name: Package Helm Chart
+        run: |
+          CHECKSUM="$(sha256sum ./release_artifacts/docker-machine-driver-pve | cut -d' ' -f1)"
+
+          # Update values.yaml with download URLs
+          yq -i ".nodeDriver.url = \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}/docker-machine-driver-pve\"" deploy/charts/pve-node-driver/values.yaml
+          yq -i ".nodeDriver.checksum = \"${CHECKSUM}\"" deploy/charts/pve-node-driver/values.yaml
+          yq -i ".uiPlugin.endpoint = \"https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/gh-pages/extensions/pve-node-driver/${{ steps.version.outputs.version }}\"" deploy/charts/pve-node-driver/values.yaml
+
+          cat deploy/charts/pve-node-driver/values.yaml
+
+          # Package the Helm chart
+          helm package ./deploy/charts/pve-node-driver \
+            --version "${{ steps.version.outputs.version }}" \
+            --app-version "${{ steps.version.outputs.release_tag }}" \
+            --destination ./release_artifacts
+
+      - name: Generate licenses.txt
+        run: >
+          ./tasks/licenses-save.sh
+          && mv licenses.txt ./release_artifacts
+
+      # Create GitHub Release
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASE_FLAGS="--notes 'Continuous build from commit ${{ github.sha }} on branch ${{ github.ref_name }}'"
+
+          if [ "${{ steps.version.outputs.is_prerelease }}" = "true" ]; then
+            RELEASE_FLAGS="$RELEASE_FLAGS --prerelease"
+          fi
+
+          gh release create "${{ steps.version.outputs.release_tag }}" \
+            --repo="${GITHUB_REPOSITORY}" \
+            --title="Continuous Release ${{ steps.version.outputs.version }}" \
+            $RELEASE_FLAGS \
+            ./release_artifacts/*
+
+      # Cleanup old continuous releases for this branch
+      - name: Cleanup old continuous releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Keep last 5 continuous releases per branch
+          SANITIZED_BRANCH="${{ steps.version.outputs.sanitized_branch }}"
+
+          echo "Cleaning up old releases for branch: ${SANITIZED_BRANCH}"
+
+          # Get all continuous releases for this branch, sorted by creation date
+          # Keep the 5 most recent, delete the rest
+          gh release list --limit 100 --json tagName,createdAt \
+            | jq -r --arg branch "$SANITIZED_BRANCH" '.[] | select(.tagName | startswith("continuous-" + $branch + "-")) | .tagName' \
+            | sort -V \
+            | head -n -5 \
+            | xargs -I {} gh release delete {} --yes --cleanup-tag 2>/dev/null || true
+
+          echo "Cleanup complete"
