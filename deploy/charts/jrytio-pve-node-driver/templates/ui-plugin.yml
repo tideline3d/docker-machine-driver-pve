@@ -8,7 +8,7 @@ metadata:
 spec:
   plugin:
     name: jrytio-pve-node-driver
-    version: {{ trimPrefix "v" .Chart.AppVersion | quote }}
+    version: {{ trimPrefix "v" .Chart.Version | quote }}
     endpoint: {{ .Values.uiPlugin.endpoint | quote }}
     noCache: false
     noAuth: false
