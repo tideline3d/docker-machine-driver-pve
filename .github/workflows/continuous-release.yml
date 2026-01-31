@@ -243,6 +243,9 @@ jobs:
           echo "Publishing to GitHub Pages for: ${GITHUB_REPOSITORY}"
           echo "This is your fork, not the upstream repository"
           
+          # Stash any changes from build process (values.yaml and package.json modifications)
+          git stash --include-untracked
+          
           # Check if gh-pages branch exists
           if git ls-remote --heads origin gh-pages | grep gh-pages; then
             echo "gh-pages branch exists, checking it out..."
