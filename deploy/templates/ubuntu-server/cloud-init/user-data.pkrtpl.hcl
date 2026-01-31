@@ -6,7 +6,7 @@ autoinstall:
   source:
     id: "ubuntu-server-minimal"
     search_drivers: false
-  timezone: "Etc/UTC"
+  timezone: "America/New_York"
   locale: "en_US.UTF-8"
   keyboard:
     layout: "us"
@@ -55,18 +55,25 @@ autoinstall:
   oem:
     install: false
   apt:
+    http_proxy: "http://apt.jryt.io:3142"
     sources:
       docker.list:
-        source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable"
+        source: "deb [arch=amd64] http://download.docker.com/linux/ubuntu $RELEASE stable"
         keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
   packages:
-    - "qemu-guest-agent"
     - "docker-ce"
     - "docker-ce-cli"
     - "containerd.io"
     - "docker-buildx-plugin"
     - "docker-compose-plugin"
+    - "qemu-guest-agent"
+    - "cifs-utils"
+    - "nfs-common"
+    - "iputils-ping"
+    - "dnsutils"
+    - "nano"
   user-data:
+    manage_etc_hosts: true 
     hostname: "${hostname}"
     users:
       - name: "${ssh_username}"

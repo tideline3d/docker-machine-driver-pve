@@ -53,6 +53,23 @@ cluster:
           label: Processor cores
         memory:
           label: Memory
+      network:
+        header: Network Configuration
+        configureNetwork:
+          label: Reconfigure network adapters after cloning
+          tooltip: Enable this to customize network bridge and VLAN settings for the cloned VM
+        bridge0:
+          label: Network Bridge (NIC 0)
+          tooltip: Network bridge for first NIC (e.g. `vmbr0`). Leave empty to use template's default.
+        vlan0:
+          label: VLAN Tag (NIC 0)
+          tooltip: VLAN tag for first NIC (e.g. `12`). Leave empty for no VLAN tag.
+        bridge1:
+          label: Network Bridge (NIC 1)
+          tooltip: Network bridge for second NIC (optional, e.g. `vmbr0`). Leave empty to use only one NIC.
+        vlan1:
+          label: VLAN Tag (NIC 1)
+          tooltip: VLAN tag for second NIC (optional, e.g. `20`). Leave empty for no VLAN tag.
       memoryBalloon:
         header: Memory ballooning
         minimumMemory:

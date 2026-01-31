@@ -1,6 +1,6 @@
 {
-  "name": "pve-node-driver",
-  "description": "Node Driver for Proxmox Virtual Environment.",
+  "name": "jrytio-pve-node-driver",
+  "description": "Node Driver for Proxmox Virtual Environment (jrytio fork).",
   "version": "0.0.0",
   "private": false,
   "rancher": {

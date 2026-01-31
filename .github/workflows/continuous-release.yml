@@ -1,0 +1,282 @@
+name: Continuous Release
+
+on:
+  push:
+    branches:
+      - '**'  # All branches
+    tags-ignore:
+      - '**'  # Don't run on tags (use release.yml for those)
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false  # Don't cancel to avoid corrupting gh-pages
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Continuous Build
+    runs-on: ubuntu-latest
+    steps:
+      # Set-up git
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for git describe
+
+      - run: >
+          git config user.name 'github-actions[bot]'
+          && git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      # Generate version number
+      - name: Generate version
+        id: version
+        run: |
+          # Debug: Show available tags
+          echo "=== Available tags ==="
+          git tag -l "v[0-9]*" | sort -V | tail -5
+          echo "======================"
+
+          # Get latest tag and strip 'v' prefix
+          BASE_VERSION_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 HEAD 2>/dev/null || echo "")
+
+          if [ -z "$BASE_VERSION_TAG" ]; then
+            # No tags found, use default version and count all commits
+            echo "WARNING: No tags found matching pattern v[0-9]*, using 0.0.0"
+            BASE_VERSION="0.0.0"
+            BUILD_NUMBER=$(git rev-list --count HEAD)
+          else
+            # Tag found, extract version and count commits since tag
+            BASE_VERSION=${BASE_VERSION_TAG#v}
+            # Strip pre-release suffix (e.g., -rc2, -alpha, -beta) to get clean base version
+            BASE_VERSION=$(echo "$BASE_VERSION" | sed 's/-.*$//')
+            # Count commits since that tag
+            BUILD_NUMBER=$(git rev-list --count ${BASE_VERSION_TAG}..HEAD)
+          fi
+
+          # Sanitize branch name for semver compatibility
+          BRANCH_NAME="${GITHUB_REF_NAME}"
+          # Remove refs/heads/ prefix if present
+          SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | sed 's|refs/heads/||')
+          # Replace invalid semver characters (/, _, space) with hyphens
+          SANITIZED_BRANCH=$(echo "$SANITIZED_BRANCH" | sed 's/[/_[:space:]]/-/g')
+          # Convert to lowercase
+          SANITIZED_BRANCH=$(echo "$SANITIZED_BRANCH" | tr '[:upper:]' '[:lower:]')
+          # Remove leading/trailing hyphens
+          SANITIZED_BRANCH=$(echo "$SANITIZED_BRANCH" | sed 's/^-*//' | sed 's/-*$//')
+          # Collapse multiple consecutive hyphens
+          SANITIZED_BRANCH=$(echo "$SANITIZED_BRANCH" | sed 's/-\+/-/g')
+          # Fallback if sanitization resulted in empty string
+          if [ -z "$SANITIZED_BRANCH" ]; then
+            SANITIZED_BRANCH="branch"
+          fi
+
+          # Construct version string
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            # Main branch: use build metadata
+            VERSION="${BASE_VERSION}+${BUILD_NUMBER}"
+            RELEASE_TAG="continuous-main-${BUILD_NUMBER}"
+            IS_PRERELEASE="false"
+          else
+            # Feature branch: use pre-release identifier
+            VERSION="${BASE_VERSION}-${SANITIZED_BRANCH}.${BUILD_NUMBER}"
+            RELEASE_TAG="continuous-${SANITIZED_BRANCH}-${BUILD_NUMBER}"
+            IS_PRERELEASE="true"
+          fi
+
+          # Output variables for later steps
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "release_tag=${RELEASE_TAG}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "sanitized_branch=${SANITIZED_BRANCH}" >> $GITHUB_OUTPUT
+
+          # Log for debugging
+          echo "Base Version Tag: ${BASE_VERSION_TAG}"
+          echo "Base Version: ${BASE_VERSION}"
+          echo "Build Number: ${BUILD_NUMBER}"
+          echo "Branch Name: ${BRANCH_NAME}"
+          echo "Sanitized Branch: ${SANITIZED_BRANCH}"
+          echo "Full Version: ${VERSION}"
+          echo "Release Tag: ${RELEASE_TAG}"
+          echo "Is Prerelease: ${IS_PRERELEASE}"
+
+      - name: Set Pages URL
+        id: pages
+        run: |
+          # GITHUB_REPOSITORY contains the current repository (fork), not upstream
+          echo "Current repository: ${GITHUB_REPOSITORY}"
+          
+          # Extract owner and repo from GITHUB_REPOSITORY (format: owner/repo)
+          OWNER=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f1)
+          REPO=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f2)
+          
+          echo "Owner: ${OWNER}"
+          echo "Repo: ${REPO}"
+          
+          # GitHub Pages URL format: https://{owner}.github.io/{repo}
+          # This will be YOUR fork's GitHub Pages, not the upstream
+          PAGES_URL="https://${OWNER}.github.io/${REPO}"
+          
+          echo "base_url=${PAGES_URL}" >> $GITHUB_OUTPUT
+          echo "GitHub Pages URL: ${PAGES_URL}"
+
+      # Set-up build environment
+      - name: Install Helm
+        uses: azure/setup-helm@v4.3.0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Pull Go dependencies
+        run: go mod vendor
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Pull Node dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install go-licenses
+        run: >
+          mkdir -p ./tools
+          && export GOBIN="$(realpath ./tools)"
+          && go install github.com/google/go-licenses@v1.6.0
+
+      # Build release artifacts
+      - run: mkdir -p ./release_artifacts
+
+      - name: Build driver binaries
+        run: >
+          go build -o ./release_artifacts/docker-machine-driver-jrytio-pve ./cmd/docker-machine-driver-jrytio-pve
+          && (cd ./release_artifacts && sha256sum ./docker-machine-driver-jrytio-pve > checksums.txt)
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+          GOARCH: amd64
+
+      - name: Build Rancher UI Extension
+        run: >
+          (cd pkg/jrytio-pve-node-driver && yarn version --new-version "${{ steps.version.outputs.version }}" --no-git-tag-version)
+          && yarn build-pkg jrytio-pve-node-driver
+
+      - name: Package Helm Chart
+        run: |
+          CHECKSUM="$(sha256sum ./release_artifacts/docker-machine-driver-jrytio-pve | cut -d' ' -f1)"
+
+          # Update values.yaml with download URLs
+          yq -i ".nodeDriver.url = \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}/docker-machine-driver-jrytio-pve\"" deploy/charts/jrytio-pve-node-driver/values.yaml
+          yq -i ".nodeDriver.checksum = \"${CHECKSUM}\"" deploy/charts/jrytio-pve-node-driver/values.yaml
+          yq -i ".uiPlugin.endpoint = \"${{ steps.pages.outputs.base_url }}/extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/plugin\"" deploy/charts/jrytio-pve-node-driver/values.yaml
+
+          cat deploy/charts/jrytio-pve-node-driver/values.yaml
+
+          # Package the Helm chart
+          helm package ./deploy/charts/jrytio-pve-node-driver \
+            --version "${{ steps.version.outputs.version }}" \
+            --app-version "${{ steps.version.outputs.release_tag }}" \
+            --destination ./release_artifacts
+
+      - name: Generate licenses.txt
+        run: >
+          ./tasks/licenses-save.sh
+          && mv licenses.txt ./release_artifacts
+
+      # Debug: List artifacts before release
+      - name: List release artifacts
+        run: |
+          echo "=== Release artifacts ==="
+          ls -lah ./release_artifacts/
+          echo "======================="
+
+      # Create GitHub Release
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Build the gh release create command with proper arguments
+          GH_ARGS=(
+            "${{ steps.version.outputs.release_tag }}"
+            "--repo=${GITHUB_REPOSITORY}"
+            "--title=Continuous Release ${{ steps.version.outputs.version }}"
+            "--notes=Continuous build from commit ${{ github.sha }} on branch ${{ github.ref_name }}"
+          )
+
+          # Add prerelease flag if needed
+          if [ "${{ steps.version.outputs.is_prerelease }}" = "true" ]; then
+            GH_ARGS+=("--prerelease")
+          fi
+
+          # Add all artifacts
+          GH_ARGS+=(./release_artifacts/*)
+
+          # Create the release
+          gh release create "${GH_ARGS[@]}"
+
+      # Cleanup old continuous releases for this branch
+      - name: Cleanup old continuous releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Keep last 5 continuous releases per branch
+          SANITIZED_BRANCH="${{ steps.version.outputs.sanitized_branch }}"
+
+          echo "Cleaning up old releases for branch: ${SANITIZED_BRANCH}"
+
+          # Get all continuous releases for this branch, sorted by creation date
+          # Keep the 5 most recent, delete the rest
+          gh release list --limit 100 --json tagName,createdAt \
+            | jq -r --arg branch "$SANITIZED_BRANCH" '.[] | select(.tagName | startswith("continuous-" + $branch + "-")) | .tagName' \
+            | sort -V \
+            | head -n -5 \
+            | xargs -I {} gh release delete {} --yes --cleanup-tag 2>/dev/null || true
+
+          echo "Cleanup complete"
+
+      - name: Push artifacts to GitHub Pages
+        run: |
+          echo "Publishing to GitHub Pages for: ${GITHUB_REPOSITORY}"
+          echo "This is your fork, not the upstream repository"
+          
+          # Copy artifacts to temp directory before switching branches
+          mkdir -p /tmp/gh-pages-artifacts
+          cp -r ./release_artifacts /tmp/gh-pages-artifacts/
+          cp -r ./dist-pkg /tmp/gh-pages-artifacts/
+          
+          # Stash any changes from build process (values.yaml and package.json modifications)
+          git stash --include-untracked
+          
+          # Check if gh-pages branch exists
+          if git ls-remote --heads origin gh-pages | grep gh-pages; then
+            echo "gh-pages branch exists, checking it out..."
+            git fetch origin gh-pages
+            git checkout gh-pages
+          else
+            echo "gh-pages branch does not exist, creating it..."
+            git checkout --orphan gh-pages
+            git rm -rf .
+            echo "# GitHub Pages for ${GITHUB_REPOSITORY}" > README.md
+            git add README.md
+            git commit -m "chore: initialize gh-pages branch"
+            git push origin gh-pages
+          fi
+          
+          # Now update with the new artifacts from temp directory
+          helm repo index /tmp/gh-pages-artifacts/release_artifacts --merge ./index.yaml --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}" || helm repo index /tmp/gh-pages-artifacts/release_artifacts --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}"
+          cp /tmp/gh-pages-artifacts/release_artifacts/index.yaml ./index.yaml
+          git add ./index.yaml
+          
+          mkdir -p "./extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          cp /tmp/gh-pages-artifacts/dist-pkg/jrytio-pve-node-driver-${{ steps.version.outputs.version }}/* "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          (cd "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}" && find * -type f | sort) > "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/files.txt"
+          git add "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}"
+          
+          git commit -m "chore: update Helm repo index for ${{ steps.version.outputs.release_tag }}"
+          
+          echo "Pushing to origin (your fork's gh-pages branch)..."
+          git push origin gh-pages

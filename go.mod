@@ -1,4 +1,4 @@
-module github.com/stellatarum/docker-machine-driver-pve
+module github.com/tideline3d/docker-machine-driver-jrytio-pve
 
 go 1.24.1
 

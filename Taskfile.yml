@@ -168,13 +168,13 @@ tasks:
   build:
     desc: Build project
     deps:
-      - build:docker-machine-driver-pve
-      - build:pve-node-driver
+      - build:docker-machine-driver-jrytio-pve
+      - build:jrytio-jrytio-pve-node-driver
     silent: true
     cmd: >
       echo "✅ PROJECT BUILT"
 
-  build:docker-machine-driver-pve:
+  build:docker-machine-driver-jrytio-pve:
     run: once
     deps:
       - dependencies:go
@@ -182,13 +182,13 @@ tasks:
       - cmd/**/*.go
     cmd: >
       mkdir -p ./bin
-      && CGO_ENABLED="0" go build -o ./bin/docker-machine-driver-pve ./cmd/docker-machine-driver-pve
+      && CGO_ENABLED="0" go build -o ./bin/docker-machine-driver-jrytio-pve ./cmd/docker-machine-driver-jrytio-pve
 
-  build:pve-node-driver:
+  build:jrytio-jrytio-pve-node-driver:
     run: once
     deps:
       - dependencies:node
     sources:
       - pkd/**/*
     cmd: >
-      yarn build-pkg pve-node-driver
+      yarn build-pkg jrytio-pve-node-driver

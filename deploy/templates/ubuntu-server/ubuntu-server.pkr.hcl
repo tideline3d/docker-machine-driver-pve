@@ -77,24 +77,33 @@ source "proxmox-iso" "ubuntu" {
   template_name        = "${var.pve_name}"
   template_description = "Packer config: https://github.com/stellatarum/docker-machine-driver-pve/blob/main/deploy/templates/ubuntu-server"
   os                   = "l26"
+  machine              = "q35"
   qemu_agent           = true
   cloud_init           = false
   onboot               = false
 
   cpu_type           = "x86-64-v2-AES"
   sockets            = 1
-  cores              = 2
-  memory             = 4096
+  cores              = 8
+  memory             = 8192
   ballooning_minimum = 0
 
   scsi_controller = "virtio-scsi-single"
   disks {
     type         = "scsi"
     storage_pool = "${var.pve_storage_disk}"
-    disk_size    = "64G"
-    ssd          = false
+    disk_size    = "20G"
+    format       = "raw"
+    io_thread    = true
+    ssd          = true
     discard      = true
     cache_mode   = "none"
+  }
+
+  network_adapters {
+    model    = "virtio"
+    bridge   = "${var.pve_network_bridge}"
+    firewall = "false"
   }
 
   network_adapters {
@@ -107,8 +116,8 @@ source "proxmox-iso" "ubuntu" {
     type  = "scsi"
     index = 1
 
-    iso_url           = "https://releases.ubuntu.com/noble/ubuntu-24.04.2-live-server-amd64.iso"
-    iso_checksum      = "sha256:d6dab0c3a657988501b4bd76f1297c053df710e06e0c3aece60dead24f270b4d"
+    iso_url           = "https://releases.ubuntu.com/noble/ubuntu-24.04.3-live-server-amd64.iso"
+    iso_checksum      = "sha256:c3514bf0056180d09376462a7a1b4f213c1d6e8ea67fae5c25099c6fd3d8274b"
     iso_storage_pool  = "${var.pve_storage_iso}"
     iso_download_pve  = true
     unmount           = true

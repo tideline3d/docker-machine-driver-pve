@@ -28,6 +28,11 @@ const (
 	flagMemoryBalloon    = "pve-memory-balloon"
 	flagFullClone        = "pve-full-clone"
 	flagTags             = "pve-tags"
+	flagNetworkBridge0   = "pve-network-bridge-0"
+	flagNetworkVlan0     = "pve-network-vlan-0"
+	flagNetworkBridge1   = "pve-network-bridge-1"
+	flagNetworkVlan1     = "pve-network-vlan-1"
+	flagConfigureNetwork = "pve-configure-network"
 )
 
 // Default values for flags.
@@ -80,6 +85,21 @@ type config struct {
 
 	// Tags to apply to the machine.
 	Tags []string
+
+	// Network bridge for first NIC (net0).
+	NetworkBridge0 string
+
+	// VLAN tag for first NIC (net0).
+	NetworkVlan0 string
+
+	// Network bridge for second NIC (net1), optional.
+	NetworkBridge1 string
+
+	// VLAN tag for second NIC (net1), optional.
+	NetworkVlan1 string
+
+	// Reconfigure network adapters after cloning.
+	ConfigureNetwork bool
 }
 
 // GetCreateFlags implements drivers.Driver.
@@ -164,6 +184,31 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   flagTags,
 			EnvVar: flagEnvVarFromFlagName(flagTags),
 			Usage:  "Comma-separated list of tags to assign to the VM",
+		},
+		mcnflag.StringFlag{
+			Name:   flagNetworkBridge0,
+			EnvVar: flagEnvVarFromFlagName(flagNetworkBridge0),
+			Usage:  "Network bridge for first NIC (e.g. 'vmbr0')",
+		},
+		mcnflag.StringFlag{
+			Name:   flagNetworkVlan0,
+			EnvVar: flagEnvVarFromFlagName(flagNetworkVlan0),
+			Usage:  "VLAN tag for first NIC (e.g. '12')",
+		},
+		mcnflag.StringFlag{
+			Name:   flagNetworkBridge1,
+			EnvVar: flagEnvVarFromFlagName(flagNetworkBridge1),
+			Usage:  "Network bridge for second NIC (optional, e.g. 'vmbr0')",
+		},
+		mcnflag.StringFlag{
+			Name:   flagNetworkVlan1,
+			EnvVar: flagEnvVarFromFlagName(flagNetworkVlan1),
+			Usage:  "VLAN tag for second NIC (optional, e.g. '20')",
+		},
+		mcnflag.BoolFlag{
+			Name:   flagConfigureNetwork,
+			EnvVar: flagEnvVarFromFlagName(flagConfigureNetwork),
+			Usage:  "Reconfigure network adapters after cloning",
 		},
 	}
 }
@@ -268,6 +313,12 @@ func (d *Driver) SetConfigFromFlags(opts drivers.DriverOptions) error {
 	d.FullClone = opts.Bool(flagFullClone)
 
 	d.Tags = strings.Split(opts.String(flagTags), ",")
+
+	d.NetworkBridge0 = opts.String(flagNetworkBridge0)
+	d.NetworkVlan0 = opts.String(flagNetworkVlan0)
+	d.NetworkBridge1 = opts.String(flagNetworkBridge1)
+	d.NetworkVlan1 = opts.String(flagNetworkVlan1)
+	d.ConfigureNetwork = opts.Bool(flagConfigureNetwork)
 
 	return nil
 }

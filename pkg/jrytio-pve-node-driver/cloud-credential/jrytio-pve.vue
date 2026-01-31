@@ -57,18 +57,18 @@ export default {
       try {
         const nodeDriver = await this.$store.dispatch('rancher/find', {
           type: 'nodedriver',
-          id:   'pve'
+          id:   'jrytio-pve'
         });
 
         const domain = parseUrl(this.value.decodedData.url).host;
         const whitelistedDomains = nodeDriver.whitelistDomains ?? [];
 
         if(!whitelistedDomains.includes(domain)) {
-          this.errorLabelKey = 'cluster.credential.pve.errors.whitelistedDomains';
+          this.errorLabelKey = 'cluster.credential.jrytio-pve.errors.whitelistedDomains';
           return false;
         }
       } catch(e) {
-        this.errorLabelKey = 'cluster.credential.pve.errors.fetchNodeDriver';
+        this.errorLabelKey = 'cluster.credential.jrytio-pve.errors.fetchNodeDriver';
         return false;
       }
 
@@ -85,14 +85,14 @@ export default {
           })
   
           if(!data.version.startsWith('8.') && !data.version.startsWith('9.')) {
-            this.errorLabelKey = 'cluster.credential.pve.errors.unsupportedProxmoxVersion';
+            this.errorLabelKey = 'cluster.credential.jrytio-pve.errors.unsupportedProxmoxVersion';
             return false;
           }
         } catch(e) {
           if(e._status == 401) {
-            this.errorLabelKey = 'cluster.credential.pve.errors.fetchProxmoxVersionUnauthorized';
+            this.errorLabelKey = 'cluster.credential.jrytio-pve.errors.fetchProxmoxVersionUnauthorized';
           } else {
-            this.errorLabelKey = 'cluster.credential.pve.errors.fetchProxmoxVersion';
+            this.errorLabelKey = 'cluster.credential.jrytio-pve.errors.fetchProxmoxVersion';
           }
   
           return false;
@@ -119,8 +119,8 @@ export default {
         :mode="mode"
         :value="value.decodedData.url"
         @change="e => {value.setData('url', e.target.value); validate();}"
-        label-key="cluster.credential.pve.url.label"
-        placeholder-key="cluster.credential.pve.url.placeholder"
+        label-key="cluster.credential.jrytio-pve.url.label"
+        placeholder-key="cluster.credential.jrytio-pve.url.placeholder"
         required
       />
     </div>
@@ -129,12 +129,12 @@ export default {
         :mode="mode"
         :value="value.decodedData.insecureTls"
         @click="e => {value.setData('insecureTls', !value.decodedData.insecureTls); validate();}"
-        label-key="cluster.credential.pve.insecureTLS.label"
+        label-key="cluster.credential.jrytio-pve.insecureTLS.label"
       />
       <Banner
         v-if="value.decodedData.insecureTls"
         color="warning"
-        label-key="cluster.credential.pve.insecureTLS.warning"
+        label-key="cluster.credential.jrytio-pve.insecureTLS.warning"
       />
     </div>
     <div class="mb-20">
@@ -143,9 +143,9 @@ export default {
         :mode="mode"
         :value="value.decodedData.tokenId"
         @change="e => {value.setData('tokenId', e.target.value); validate();}"
-        label-key="cluster.credential.pve.tokenID.label"
-        placeholder-key="cluster.credential.pve.tokenID.placeholder"
-        tooltip-key="cluster.credential.pve.tokenID.tooltip"
+        label-key="cluster.credential.jrytio-pve.tokenID.label"
+        placeholder-key="cluster.credential.jrytio-pve.tokenID.placeholder"
+        tooltip-key="cluster.credential.jrytio-pve.tokenID.tooltip"
         required
       />
     </div>
@@ -155,8 +155,8 @@ export default {
         :mode="mode"
         :value="value.decodedData.tokenSecret"
         @change="e => {value.setData('tokenSecret', e.target.value); validate();}"
-        label-key="cluster.credential.pve.tokenSecret.label"
-        placeholder-key="cluster.credential.pve.tokenSecret.placeholder"
+        label-key="cluster.credential.jrytio-pve.tokenSecret.label"
+        placeholder-key="cluster.credential.jrytio-pve.tokenSecret.placeholder"
         required
       />
     </div>

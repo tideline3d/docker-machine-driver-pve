@@ -1,19 +1,19 @@
 apiVersion: catalog.cattle.io/v1
 kind: UIPlugin
 metadata:
-  name: pve-node-driver
+  name: jrytio-pve-node-driver
   labels:
-    app.kubernetes.io/name: pve-node-driver
+    app.kubernetes.io/name: jrytio-pve-node-driver
     app.kubernetes.io/version: {{ trimPrefix "v" .Chart.AppVersion | quote }}
 spec:
   plugin:
-    name: pve-node-driver
-    version: {{ trimPrefix "v" .Chart.AppVersion | quote }}
+    name: jrytio-pve-node-driver
+    version: {{ trimPrefix "v" .Chart.Version | quote }}
     endpoint: {{ .Values.uiPlugin.endpoint | quote }}
     noCache: false
     noAuth: false
     metadata:
-      catalog.cattle.io/display-name: Proxmox VE Node Driver
+      catalog.cattle.io/display-name: Proxmox VE Node Driver (jrytio)
       catalog.cattle.io/kube-version: ">= 1.16.0-0"
       catalog.cattle.io/rancher-version: ">= 2.10.0-0"
       catalog.cattle.io/ui-extensions-version: ">= 3.0.0 < 4.0.0"
