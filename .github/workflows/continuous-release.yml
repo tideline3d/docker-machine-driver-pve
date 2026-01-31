@@ -101,11 +101,25 @@ jobs:
           echo "Release Tag: ${RELEASE_TAG}"
           echo "Is Prerelease: ${IS_PRERELEASE}"
 
-      - name: Get Pages url
+      - name: Set Pages URL
         id: pages
-        uses: actions/configure-pages@v2
-        with:
-          enablement: false
+        run: |
+          # GITHUB_REPOSITORY contains the current repository (fork), not upstream
+          echo "Current repository: ${GITHUB_REPOSITORY}"
+          
+          # Extract owner and repo from GITHUB_REPOSITORY (format: owner/repo)
+          OWNER=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f1)
+          REPO=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f2)
+          
+          echo "Owner: ${OWNER}"
+          echo "Repo: ${REPO}"
+          
+          # GitHub Pages URL format: https://{owner}.github.io/{repo}
+          # This will be YOUR fork's GitHub Pages, not the upstream
+          PAGES_URL="https://${OWNER}.github.io/${REPO}"
+          
+          echo "base_url=${PAGES_URL}" >> $GITHUB_OUTPUT
+          echo "GitHub Pages URL: ${PAGES_URL}"
 
       # Set-up build environment
       - name: Install Helm
@@ -225,7 +239,10 @@ jobs:
           echo "Cleanup complete"
 
       - name: Push artifacts to GitHub Pages
-        run: >
+        run: |
+          echo "Publishing to GitHub Pages for: ${GITHUB_REPOSITORY}"
+          echo "This is your fork, not the upstream repository"
+          
           git checkout gh-pages --force
           && helm repo index ./release_artifacts --merge ./index.yaml --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}"
           && cp ./release_artifacts/index.yaml ./index.yaml
@@ -235,4 +252,5 @@ jobs:
           && (cd "extensions/pve-node-driver/${{ steps.version.outputs.version }}" && find * -type f | sort) > "extensions/pve-node-driver/${{ steps.version.outputs.version }}/files.txt"
           && git add "extensions/pve-node-driver/${{ steps.version.outputs.version }}"
           && git commit -m "chore: update Helm repo index for ${{ steps.version.outputs.release_tag }}"
+          && echo "Pushing to origin (your fork's gh-pages branch)..."
           && git push origin gh-pages
