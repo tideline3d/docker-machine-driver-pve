@@ -8,8 +8,8 @@ on:
       - '**'  # Don't run on tags (use release.yml for those)
 
 concurrency:
-  group: continuous-release-${{ github.ref }}
-  cancel-in-progress: true  # Cancel old builds for same branch
+  group: gh-pages
+  cancel-in-progress: false  # Don't cancel to avoid corrupting gh-pages
 
 permissions:
   contents: write
@@ -101,6 +101,12 @@ jobs:
           echo "Release Tag: ${RELEASE_TAG}"
           echo "Is Prerelease: ${IS_PRERELEASE}"
 
+      - name: Get Pages url
+        id: pages
+        uses: actions/configure-pages@v2
+        with:
+          enablement: false
+
       # Set-up build environment
       - name: Install Helm
         uses: azure/setup-helm@v4.3.0
@@ -152,7 +158,7 @@ jobs:
           # Update values.yaml with download URLs
           yq -i ".nodeDriver.url = \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}/docker-machine-driver-pve\"" deploy/charts/pve-node-driver/values.yaml
           yq -i ".nodeDriver.checksum = \"${CHECKSUM}\"" deploy/charts/pve-node-driver/values.yaml
-          yq -i ".uiPlugin.endpoint = \"https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/gh-pages/extensions/pve-node-driver/${{ steps.version.outputs.version }}\"" deploy/charts/pve-node-driver/values.yaml
+          yq -i ".uiPlugin.endpoint = \"${{ steps.pages.outputs.base_url }}/extensions/pve-node-driver/${{ steps.version.outputs.version }}\"" deploy/charts/pve-node-driver/values.yaml
 
           cat deploy/charts/pve-node-driver/values.yaml
 
@@ -217,3 +223,16 @@ jobs:
             | xargs -I {} gh release delete {} --yes --cleanup-tag 2>/dev/null || true
 
           echo "Cleanup complete"
+
+      - name: Push artifacts to GitHub Pages
+        run: >
+          git checkout gh-pages --force
+          && helm repo index ./release_artifacts --merge ./index.yaml --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}"
+          && cp ./release_artifacts/index.yaml ./index.yaml
+          && git add ./index.yaml
+          && mkdir -p "./extensions/pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          && cp ./dist-pkg/pve-node-driver-${{ steps.version.outputs.version }}/* "extensions/pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          && (cd "extensions/pve-node-driver/${{ steps.version.outputs.version }}" && find * -type f | sort) > "extensions/pve-node-driver/${{ steps.version.outputs.version }}/files.txt"
+          && git add "extensions/pve-node-driver/${{ steps.version.outputs.version }}"
+          && git commit -m "chore: update Helm repo index for ${{ steps.version.outputs.release_tag }}"
+          && git push origin gh-pages
