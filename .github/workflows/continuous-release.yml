@@ -32,11 +32,17 @@ jobs:
       - name: Generate version
         id: version
         run: |
+          # Debug: Show available tags
+          echo "=== Available tags ==="
+          git tag -l "v[0-9]*" | sort -V | tail -5
+          echo "======================"
+
           # Get latest tag and strip 'v' prefix
           BASE_VERSION_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 HEAD 2>/dev/null || echo "")
 
           if [ -z "$BASE_VERSION_TAG" ]; then
             # No tags found, use default version and count all commits
+            echo "WARNING: No tags found matching pattern v[0-9]*, using 0.0.0"
             BASE_VERSION="0.0.0"
             BUILD_NUMBER=$(git rev-list --count HEAD)
           else
@@ -50,7 +56,20 @@ jobs:
 
           # Sanitize branch name for semver compatibility
           BRANCH_NAME="${GITHUB_REF_NAME}"
-          SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | sed 's|refs/heads/||' | tr '/_[:upper:]' '---[:lower:]' | sed 's/^-*//' | sed 's/-*$//' | sed 's/-\+/-/g')
+          # Remove refs/heads/ prefix if present
+          SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | sed 's|refs/heads/||')
+          # Replace invalid semver characters (/, _, space) with hyphens
+          SANITIZED_BRANCH=$(echo "$SANITIZED_BRANCH" | sed 's/[/_[:space:]]/-/g')
+          # Convert to lowercase
+          SANITIZED_BRANCH=$(echo "$SANITIZED_BRANCH" | tr '[:upper:]' '[:lower:]')
+          # Remove leading/trailing hyphens
+          SANITIZED_BRANCH=$(echo "$SANITIZED_BRANCH" | sed 's/^-*//' | sed 's/-*$//')
+          # Collapse multiple consecutive hyphens
+          SANITIZED_BRANCH=$(echo "$SANITIZED_BRANCH" | sed 's/-\+/-/g')
+          # Fallback if sanitization resulted in empty string
+          if [ -z "$SANITIZED_BRANCH" ]; then
+            SANITIZED_BRANCH="branch"
+          fi
 
           # Construct version string
           if [ "$GITHUB_REF_NAME" = "main" ]; then
