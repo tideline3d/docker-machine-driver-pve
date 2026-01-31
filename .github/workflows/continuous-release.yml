@@ -167,22 +167,36 @@ jobs:
           ./tasks/licenses-save.sh
           && mv licenses.txt ./release_artifacts
 
+      # Debug: List artifacts before release
+      - name: List release artifacts
+        run: |
+          echo "=== Release artifacts ==="
+          ls -lah ./release_artifacts/
+          echo "======================="
+
       # Create GitHub Release
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          RELEASE_FLAGS="--notes 'Continuous build from commit ${{ github.sha }} on branch ${{ github.ref_name }}'"
+          # Build the gh release create command with proper arguments
+          GH_ARGS=(
+            "${{ steps.version.outputs.release_tag }}"
+            "--repo=${GITHUB_REPOSITORY}"
+            "--title=Continuous Release ${{ steps.version.outputs.version }}"
+            "--notes=Continuous build from commit ${{ github.sha }} on branch ${{ github.ref_name }}"
+          )
 
+          # Add prerelease flag if needed
           if [ "${{ steps.version.outputs.is_prerelease }}" = "true" ]; then
-            RELEASE_FLAGS="$RELEASE_FLAGS --prerelease"
+            GH_ARGS+=("--prerelease")
           fi
 
-          gh release create "${{ steps.version.outputs.release_tag }}" \
-            --repo="${GITHUB_REPOSITORY}" \
-            --title="Continuous Release ${{ steps.version.outputs.version }}" \
-            $RELEASE_FLAGS \
-            ./release_artifacts/*
+          # Add all artifacts
+          GH_ARGS+=(./release_artifacts/*)
+
+          # Create the release
+          gh release create "${GH_ARGS[@]}"
 
       # Cleanup old continuous releases for this branch
       - name: Cleanup old continuous releases
