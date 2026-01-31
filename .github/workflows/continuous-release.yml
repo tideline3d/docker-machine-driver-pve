@@ -33,14 +33,20 @@ jobs:
         id: version
         run: |
           # Get latest tag and strip 'v' prefix
-          BASE_VERSION_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 HEAD 2>/dev/null || echo "v0.0.0")
-          BASE_VERSION=${BASE_VERSION_TAG#v}
+          BASE_VERSION_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 HEAD 2>/dev/null || echo "")
 
-          # Strip pre-release suffix (e.g., -rc2, -alpha, -beta) to get clean base version
-          BASE_VERSION=$(echo "$BASE_VERSION" | sed 's/-.*$//')
-
-          # Count commits since that tag
-          BUILD_NUMBER=$(git rev-list --count ${BASE_VERSION_TAG}..HEAD)
+          if [ -z "$BASE_VERSION_TAG" ]; then
+            # No tags found, use default version and count all commits
+            BASE_VERSION="0.0.0"
+            BUILD_NUMBER=$(git rev-list --count HEAD)
+          else
+            # Tag found, extract version and count commits since tag
+            BASE_VERSION=${BASE_VERSION_TAG#v}
+            # Strip pre-release suffix (e.g., -rc2, -alpha, -beta) to get clean base version
+            BASE_VERSION=$(echo "$BASE_VERSION" | sed 's/-.*$//')
+            # Count commits since that tag
+            BUILD_NUMBER=$(git rev-list --count ${BASE_VERSION_TAG}..HEAD)
+          fi
 
           # Sanitize branch name for semver compatibility
           BRANCH_NAME="${GITHUB_REF_NAME}"
