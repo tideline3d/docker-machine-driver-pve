@@ -1,0 +1,22 @@
+FROM golang:1.22-alpine
+
+# Install docker-machine and dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    openssh-client \
+    ca-certificates
+
+# Install docker-machine
+ARG DOCKER_MACHINE_VERSION=v0.16.2
+RUN curl -L https://github.com/docker/machine/releases/download/${DOCKER_MACHINE_VERSION}/docker-machine-Linux-x86_64 \
+    -o /usr/local/bin/docker-machine && \
+    chmod +x /usr/local/bin/docker-machine
+
+# Create directory for drivers
+RUN mkdir -p /usr/local/bin
+
+WORKDIR /workspace
+
+# Entry point will be bash so we can run commands interactively
+ENTRYPOINT ["/bin/bash"]

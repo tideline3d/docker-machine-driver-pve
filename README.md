@@ -84,9 +84,11 @@ This driver requires a Proxmox VE template with:
 * [`qemu-guest-agent`](https://pve.proxmox.com/wiki/Qemu-guest-agent),
 * cloud-init initialization enabled,
 * empty CD/DVD drive (**NOT** PVE's CloudInit Drive) on IDE, SATA or SCSI bus,
-* DHCP enabled network interface.
+* at least one network interface with DHCP enabled.
 
 The template must be placed in the same resource pool where the machines will be deployed (i.e. `--pve-resource-pool`).
+
+**Note:** Network adapters can be customized at VM creation time using the `--pve-configure-network` flag along with bridge and VLAN settings, allowing you to use a single template for multiple network configurations.
 
 You can use [sample Ubuntu Server template](deploy/templates/ubuntu-server) for development and testing.
 
@@ -110,6 +112,11 @@ You can use [sample Ubuntu Server template](deploy/templates/ubuntu-server) for 
 | `--pve-memory`            | `PVE_MEMORY`            | *unset* <sup>1</sup>               | If set, amount of memory in MiB to configure for the machine.                                                        |
 | `--pve-memory-balloon`    | `PVE_MEMORY_BALLOON`    | *unset* <sup>1</sup>               | If set, minimum amount of memory in MiB to configure for the machine.<br> If set to `0`, disables memory ballooning. |
 | `--pve-tags`              | `PVE_TAGS`              | *unset*                            | If set, Comma-separated list of tags to assign to the VM (eg. `foo,bar,foobar`).                                     |
+| `--pve-network-bridge-0`  | `PVE_NETWORK_BRIDGE_0`  | *unset*                            | Network bridge for first NIC (e.g. `vmbr0`). Requires `--pve-configure-network`.                                     |
+| `--pve-network-vlan-0`    | `PVE_NETWORK_VLAN_0`    | *unset*                            | VLAN tag for first NIC (e.g. `12`). Requires `--pve-configure-network`.                                              |
+| `--pve-network-bridge-1`  | `PVE_NETWORK_BRIDGE_1`  | *unset*                            | Network bridge for second NIC (e.g. `vmbr0`). Optional. Requires `--pve-configure-network`.                          |
+| `--pve-network-vlan-1`    | `PVE_NETWORK_VLAN_1`    | *unset*                            | VLAN tag for second NIC (e.g. `20`). Optional. Requires `--pve-configure-network`.                                   |
+| `--pve-configure-network` | `PVE_CONFIGURE_NETWORK` | `false`                            | Enable network adapter reconfiguration after cloning. Required for network bridge/VLAN settings.                      |
 
 <sup>1</sup> - If only one of `--pve-memory` or `--pve-memory-balloon` is specified, the other one will automatically be defaulted to the same value except if `--pve-memory-balloon` is set to `0`.
 

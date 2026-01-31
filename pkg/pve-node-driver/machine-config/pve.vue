@@ -61,6 +61,11 @@ export default {
         memoryBalloon: this.value.memoryBalloon ? parseInt(this.value.memoryBalloon) : "",
         fullClone: this.value.fullClone ?? false,
         tags: this.value.tags ?? '',
+        networkBridge0: this.value.networkBridge0 ?? '',
+        networkVlan0: this.value.networkVlan0 ?? '',
+        networkBridge1: this.value.networkBridge1 ?? '',
+        networkVlan1: this.value.networkVlan1 ?? '',
+        configureNetwork: this.value.configureNetwork ?? false,
       },
     }
   },
@@ -245,6 +250,12 @@ export default {
       this.value.memory = this.currentValue.memory.toString();
       this.value.memoryBalloon = this.currentValue.memoryBalloon.toString();
       this.value.fullClone = this.currentValue.fullClone;
+      this.value.tags = this.currentValue.tags;
+      this.value.networkBridge0 = this.currentValue.networkBridge0;
+      this.value.networkVlan0 = this.currentValue.networkVlan0;
+      this.value.networkBridge1 = this.currentValue.networkBridge1;
+      this.value.networkVlan1 = this.currentValue.networkVlan1;
+      this.value.configureNetwork = this.currentValue.configureNetwork;
 
       this.$emit('validationChanged', true);
     },
@@ -612,6 +623,73 @@ export default {
           suffix="MiB"
           min="0"
           step="256"
+        />
+      </div>
+    </div>
+
+    <h3>
+      <t k="cluster.machineConfig.pve.network.header" />
+    </h3>
+    <div class="row mb-10">
+      <div class="col span-12">
+        <!-- Configure network -->
+        <Checkbox
+          :mode="mode"
+          v-model:value="currentValue.configureNetwork"
+          label-key="cluster.machineConfig.pve.network.configureNetwork.label"
+          tooltip-key="cluster.machineConfig.pve.network.configureNetwork.tooltip"
+        />
+      </div>
+    </div>
+    <div class="row mb-10">
+      <div class="col span-6">
+        <!-- Network Bridge 0 -->
+        <LabeledInput
+          type="text"
+          :mode="mode"
+          :disabled="disabled || !currentValue.configureNetwork"
+          v-model:value="currentValue.networkBridge0"
+          label-key="cluster.machineConfig.pve.network.bridge0.label"
+          tooltip-key="cluster.machineConfig.pve.network.bridge0.tooltip"
+          placeholder="vmbr0"
+        />
+      </div>
+      <div class="col span-6">
+        <!-- Network VLAN 0 -->
+        <LabeledInput
+          type="text"
+          :mode="mode"
+          :disabled="disabled || !currentValue.configureNetwork"
+          v-model:value="currentValue.networkVlan0"
+          label-key="cluster.machineConfig.pve.network.vlan0.label"
+          tooltip-key="cluster.machineConfig.pve.network.vlan0.tooltip"
+          placeholder="12"
+        />
+      </div>
+    </div>
+    <div class="row mb-20">
+      <div class="col span-6">
+        <!-- Network Bridge 1 -->
+        <LabeledInput
+          type="text"
+          :mode="mode"
+          :disabled="disabled || !currentValue.configureNetwork"
+          v-model:value="currentValue.networkBridge1"
+          label-key="cluster.machineConfig.pve.network.bridge1.label"
+          tooltip-key="cluster.machineConfig.pve.network.bridge1.tooltip"
+          placeholder="vmbr0"
+        />
+      </div>
+      <div class="col span-6">
+        <!-- Network VLAN 1 -->
+        <LabeledInput
+          type="text"
+          :mode="mode"
+          :disabled="disabled || !currentValue.configureNetwork"
+          v-model:value="currentValue.networkVlan1"
+          label-key="cluster.machineConfig.pve.network.vlan1.label"
+          tooltip-key="cluster.machineConfig.pve.network.vlan1.tooltip"
+          placeholder="20"
         />
       </div>
     </div>
