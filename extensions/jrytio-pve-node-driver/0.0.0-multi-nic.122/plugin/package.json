@@ -1,0 +1,19 @@
+{
+  "name": "jrytio-pve-node-driver",
+  "description": "Node Driver for Proxmox Virtual Environment (jrytio fork).",
+  "version": "0.0.0-multi-nic.122",
+  "private": false,
+  "rancher": true,
+  "engines": {
+    "node": ">=16"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-typescript": "~5.0.0",
+    "@vue/cli-service": "~5.0.0"
+  },
+  "files": [
+    "**/*"
+  ],
+  "main": "jrytio-pve-node-driver-0.0.0-multi-nic.122.umd.min.js"
+}
