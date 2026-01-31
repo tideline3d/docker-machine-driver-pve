@@ -269,10 +269,10 @@ export default {
         });
 
         const decodedData = {
-          url: atob(secret.data['pvecredentialConfig-url']),
-          insecureTls: atob(secret.data['pvecredentialConfig-insecureTls']) == 'true',
-          tokenId: atob(secret.data['pvecredentialConfig-tokenId']),
-          tokenSecret: atob(secret.data['pvecredentialConfig-tokenSecret']),
+          url: atob(secret.data['jrytiocredentialConfig-url']),
+          insecureTls: atob(secret.data['jrytiocredentialConfig-insecureTls']) == 'true',
+          tokenId: atob(secret.data['jrytiocredentialConfig-tokenId']),
+          tokenSecret: atob(secret.data['jrytiocredentialConfig-tokenSecret']),
         }
 
         if(decodedData.insecureTls) {
