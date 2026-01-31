@@ -153,8 +153,8 @@ jobs:
 
       - name: Build driver binaries
         run: >
-          go build -o ./release_artifacts/docker-machine-driver-pve ./cmd/docker-machine-driver-pve
-          && (cd ./release_artifacts && sha256sum ./docker-machine-driver-pve > checksums.txt)
+          go build -o ./release_artifacts/docker-machine-driver-jrytio-pve ./cmd/docker-machine-driver-jrytio-pve
+          && (cd ./release_artifacts && sha256sum ./docker-machine-driver-jrytio-pve > checksums.txt)
         env:
           CGO_ENABLED: 0
           GOOS: linux
@@ -162,22 +162,22 @@ jobs:
 
       - name: Build Rancher UI Extension
         run: >
-          (cd pkg/pve-node-driver && yarn version --new-version "${{ steps.version.outputs.version }}" --no-git-tag-version)
-          && yarn build-pkg pve-node-driver
+          (cd pkg/jrytio-pve-node-driver && yarn version --new-version "${{ steps.version.outputs.version }}" --no-git-tag-version)
+          && yarn build-pkg jrytio-pve-node-driver
 
       - name: Package Helm Chart
         run: |
-          CHECKSUM="$(sha256sum ./release_artifacts/docker-machine-driver-pve | cut -d' ' -f1)"
+          CHECKSUM="$(sha256sum ./release_artifacts/docker-machine-driver-jrytio-pve | cut -d' ' -f1)"
 
           # Update values.yaml with download URLs
-          yq -i ".nodeDriver.url = \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}/docker-machine-driver-pve\"" deploy/charts/pve-node-driver/values.yaml
-          yq -i ".nodeDriver.checksum = \"${CHECKSUM}\"" deploy/charts/pve-node-driver/values.yaml
-          yq -i ".uiPlugin.endpoint = \"${{ steps.pages.outputs.base_url }}/extensions/pve-node-driver/${{ steps.version.outputs.version }}\"" deploy/charts/pve-node-driver/values.yaml
+          yq -i ".nodeDriver.url = \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}/docker-machine-driver-jrytio-pve\"" deploy/charts/jrytio-pve-node-driver/values.yaml
+          yq -i ".nodeDriver.checksum = \"${CHECKSUM}\"" deploy/charts/jrytio-pve-node-driver/values.yaml
+          yq -i ".uiPlugin.endpoint = \"${{ steps.pages.outputs.base_url }}/extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}\"" deploy/charts/jrytio-pve-node-driver/values.yaml
 
-          cat deploy/charts/pve-node-driver/values.yaml
+          cat deploy/charts/jrytio-pve-node-driver/values.yaml
 
           # Package the Helm chart
-          helm package ./deploy/charts/pve-node-driver \
+          helm package ./deploy/charts/jrytio-pve-node-driver \
             --version "${{ steps.version.outputs.version }}" \
             --app-version "${{ steps.version.outputs.release_tag }}" \
             --destination ./release_artifacts
@@ -263,10 +263,10 @@ jobs:
           cp ./release_artifacts/index.yaml ./index.yaml
           git add ./index.yaml
           
-          mkdir -p "./extensions/pve-node-driver/${{ steps.version.outputs.version }}/plugin"
-          cp ./dist-pkg/pve-node-driver-${{ steps.version.outputs.version }}/* "extensions/pve-node-driver/${{ steps.version.outputs.version }}/plugin"
-          (cd "extensions/pve-node-driver/${{ steps.version.outputs.version }}" && find * -type f | sort) > "extensions/pve-node-driver/${{ steps.version.outputs.version }}/files.txt"
-          git add "extensions/pve-node-driver/${{ steps.version.outputs.version }}"
+          mkdir -p "./extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          cp ./dist-pkg/jrytio-pve-node-driver-${{ steps.version.outputs.version }}/* "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          (cd "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}" && find * -type f | sort) > "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/files.txt"
+          git add "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}"
           
           git commit -m "chore: update Helm repo index for ${{ steps.version.outputs.release_tag }}"
           

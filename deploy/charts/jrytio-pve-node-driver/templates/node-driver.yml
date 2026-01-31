@@ -1,9 +1,9 @@
 apiVersion: management.cattle.io/v3
 kind: NodeDriver
 metadata:
-  name: pve
+  name: jrytio-pve
   labels:
-    app.kubernetes.io/name: pve-node-driver
+    app.kubernetes.io/name: jrytio-pve-node-driver
     app.kubernetes.io/version: {{ trimPrefix "v" .Chart.AppVersion | quote }}
   annotations:
     publicCredentialFields: url,insecureTls,tokenId
@@ -11,8 +11,8 @@ metadata:
     optionalCredentialFields: insecureTls
     passwordFields: tokenSecret
 spec:
-  displayName: "Proxmox VE"
-  description: "Node Driver for Proxmox Virtual Environment"
+  displayName: "Proxmox VE (jrytio)"
+  description: "Node Driver for Proxmox Virtual Environment (jrytio fork)"
   uiUrl: ""
   url: {{ .Values.nodeDriver.url | quote }}
   checksum: {{ .Values.nodeDriver.checksum | quote }}

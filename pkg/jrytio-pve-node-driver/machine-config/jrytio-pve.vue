@@ -474,7 +474,7 @@ export default {
 <template>
   <div class="mt-20 mb-20">
     <h3>
-      <t k="cluster.machineConfig.pve.template.header" />
+      <t k="cluster.machineConfig.jrytio-pve.template.header" />
     </h3>
     <div class="row mb-10">
       <div class="col span-6">
@@ -486,7 +486,7 @@ export default {
           :disabled="disabled"
           :value="currentValue.resourcePool"
           @change="e => { currentValue.resourcePool = e.target.value}"
-          label-key="cluster.machineConfig.pve.template.resourcePool.label"
+          label-key="cluster.machineConfig.jrytio-pve.template.resourcePool.label"
           required
         />
 
@@ -496,7 +496,7 @@ export default {
           :disabled="disabled"
           v-model:value="currentValue.resourcePool"
           :options="resourcePools"
-          label-key="cluster.machineConfig.pve.template.resourcePool.label"
+          label-key="cluster.machineConfig.jrytio-pve.template.resourcePool.label"
           required
         />
       </div>
@@ -509,7 +509,7 @@ export default {
           :disabled="disabled"
           :value="currentValue.template"
           @change="e => { currentValue.template = e.target.value}"
-          label-key="cluster.machineConfig.pve.template.templateID.label"
+          label-key="cluster.machineConfig.jrytio-pve.template.templateID.label"
           required
           min="1"
           step="1"
@@ -522,7 +522,7 @@ export default {
           v-model:value="templateSelectValue"
           @option:selected="selectTemplate"
           :options="Object.values(templateSelectOptions)"
-          label-key="cluster.machineConfig.pve.template.templateID.label"
+          label-key="cluster.machineConfig.jrytio-pve.template.templateID.label"
           required
         />
       </div>
@@ -537,8 +537,8 @@ export default {
           :disabled="disabled"
           :value="currentValue.isoDevice"
           @change="e => { currentValue.isoDevice = e.target.value}"
-          label-key="cluster.machineConfig.pve.template.iso.label"
-          tooltip-key="cluster.machineConfig.pve.template.iso.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.template.iso.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.template.iso.tooltip"
           required
         />
 
@@ -548,8 +548,8 @@ export default {
           :disabled="disabled || (templates != null && !currentValue.template)"
           v-model:value="currentValue.isoDevice"
           :options="isoDeviceSelectOptions"
-          label-key="cluster.machineConfig.pve.template.iso.label"
-          tooltip-key="cluster.machineConfig.pve.template.iso.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.template.iso.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.template.iso.tooltip"
           required
         />
       </div>
@@ -561,8 +561,8 @@ export default {
           :mode="mode"
           :value="currentValue.networkInterface"
           @change="e => { currentValue.networkInterface = e.target.value}"
-          label-key="cluster.machineConfig.pve.template.network.label"
-          tooltip-key="cluster.machineConfig.pve.template.network.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.template.network.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.template.network.tooltip"
           required
         />
 
@@ -572,15 +572,15 @@ export default {
           :disabled="disabled || (templates != null && !currentValue.template)"
           v-model:value="currentValue.networkInterface"
           :options="networkInterfaceSelectOptions"
-          label-key="cluster.machineConfig.pve.template.network.label"
-          tooltip-key="cluster.machineConfig.pve.template.network.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.template.network.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.template.network.tooltip"
           required
         />
       </div>
     </div>
 
     <h3>
-      <t k="cluster.machineConfig.pve.hardware.header" />
+      <t k="cluster.machineConfig.jrytio-pve.hardware.header" />
     </h3>
     <div class="row mb-10">
       <div class="col span-6">
@@ -590,7 +590,7 @@ export default {
           :mode="mode"
           :disabled="disabled || (templates != null && !currentValue.template)"
           v-model:value="currentValue.processorSockets"
-          label-key="cluster.machineConfig.pve.hardware.processorSockets.label"
+          label-key="cluster.machineConfig.jrytio-pve.hardware.processorSockets.label"
           suffix="sockets"
           min="0"
           step="1"
@@ -603,7 +603,7 @@ export default {
           :mode="mode"
           :disabled="disabled || (templates != null && !currentValue.template)"
           v-model:value="currentValue.processorCores"
-          label-key="cluster.machineConfig.pve.hardware.processorCores.label"
+          label-key="cluster.machineConfig.jrytio-pve.hardware.processorCores.label"
           suffix="cores"
           min="0"
           step="1"
@@ -619,7 +619,7 @@ export default {
           :mode="mode"
           :disabled="disabled || (templates != null && !currentValue.template)"
           v-model:value="currentValue.memory"
-          label-key="cluster.machineConfig.pve.hardware.memory.label"
+          label-key="cluster.machineConfig.jrytio-pve.hardware.memory.label"
           suffix="MiB"
           min="0"
           step="256"
@@ -628,7 +628,7 @@ export default {
     </div>
 
     <h3>
-      <t k="cluster.machineConfig.pve.network.header" />
+      <t k="cluster.machineConfig.jrytio-pve.network.header" />
     </h3>
     <div class="row mb-10">
       <div class="col span-12">
@@ -636,8 +636,8 @@ export default {
         <Checkbox
           :mode="mode"
           v-model:value="currentValue.configureNetwork"
-          label-key="cluster.machineConfig.pve.network.configureNetwork.label"
-          tooltip-key="cluster.machineConfig.pve.network.configureNetwork.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.network.configureNetwork.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.network.configureNetwork.tooltip"
         />
       </div>
     </div>
@@ -649,8 +649,8 @@ export default {
           :mode="mode"
           :disabled="disabled || !currentValue.configureNetwork"
           v-model:value="currentValue.networkBridge0"
-          label-key="cluster.machineConfig.pve.network.bridge0.label"
-          tooltip-key="cluster.machineConfig.pve.network.bridge0.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.network.bridge0.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.network.bridge0.tooltip"
           placeholder="vmbr0"
         />
       </div>
@@ -661,8 +661,8 @@ export default {
           :mode="mode"
           :disabled="disabled || !currentValue.configureNetwork"
           v-model:value="currentValue.networkVlan0"
-          label-key="cluster.machineConfig.pve.network.vlan0.label"
-          tooltip-key="cluster.machineConfig.pve.network.vlan0.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.network.vlan0.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.network.vlan0.tooltip"
           placeholder="12"
         />
       </div>
@@ -675,8 +675,8 @@ export default {
           :mode="mode"
           :disabled="disabled || !currentValue.configureNetwork"
           v-model:value="currentValue.networkBridge1"
-          label-key="cluster.machineConfig.pve.network.bridge1.label"
-          tooltip-key="cluster.machineConfig.pve.network.bridge1.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.network.bridge1.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.network.bridge1.tooltip"
           placeholder="vmbr0"
         />
       </div>
@@ -687,8 +687,8 @@ export default {
           :mode="mode"
           :disabled="disabled || !currentValue.configureNetwork"
           v-model:value="currentValue.networkVlan1"
-          label-key="cluster.machineConfig.pve.network.vlan1.label"
-          tooltip-key="cluster.machineConfig.pve.network.vlan1.tooltip"
+          label-key="cluster.machineConfig.jrytio-pve.network.vlan1.label"
+          tooltip-key="cluster.machineConfig.jrytio-pve.network.vlan1.tooltip"
           placeholder="20"
         />
       </div>
@@ -696,7 +696,7 @@ export default {
 
     <portal :to="`advanced-${uuid}`">
       <h3>
-        <t k="cluster.machineConfig.pve.vmTags.header" />
+        <t k="cluster.machineConfig.jrytio-pve.vmTags.header" />
       </h3>
       <div class="row mb-20">
         <div class="col span-12">
@@ -705,15 +705,15 @@ export default {
             type="text"
             :mode="mode"
             v-model:value="currentValue.tags"
-            label-key="cluster.machineConfig.pve.vmTags.label"
-            tooltip-key="cluster.machineConfig.pve.vmTags.tooltip"
+            label-key="cluster.machineConfig.jrytio-pve.vmTags.label"
+            tooltip-key="cluster.machineConfig.jrytio-pve.vmTags.tooltip"
             placeholder="tag1,tag2"
           />
         </div>
       </div>
 
       <h3>
-        <t k="cluster.machineConfig.pve.memoryBalloon.header" />
+        <t k="cluster.machineConfig.jrytio-pve.memoryBalloon.header" />
       </h3>
       <div class="row mb-20">
         <div class="col span-6">
@@ -723,8 +723,8 @@ export default {
             :mode="mode"
             :disabled="disabled || (templates != null && !currentValue.template)"
             v-model:value="currentValue.memoryBalloon"
-            label-key="cluster.machineConfig.pve.memoryBalloon.minimumMemory.label"
-            tooltip-key="cluster.machineConfig.pve.memoryBalloon.minimumMemory.tooltip"
+            label-key="cluster.machineConfig.jrytio-pve.memoryBalloon.minimumMemory.label"
+            tooltip-key="cluster.machineConfig.jrytio-pve.memoryBalloon.minimumMemory.tooltip"
             suffix="MiB"
             min="0"
             step="256"
@@ -734,7 +734,7 @@ export default {
       </div>
 
       <h3>
-        <t k="cluster.machineConfig.pve.ssh.header" />
+        <t k="cluster.machineConfig.jrytio-pve.ssh.header" />
       </h3>
       <div class="row mb-20">
         <div class="col span-6">
@@ -743,8 +743,8 @@ export default {
             type="text"
             :mode="mode"
             v-model:value="currentValue.sshUser"
-            label-key="cluster.machineConfig.pve.ssh.username.label"
-            tooltip-key="cluster.machineConfig.pve.ssh.username.tooltip"
+            label-key="cluster.machineConfig.jrytio-pve.ssh.username.label"
+            tooltip-key="cluster.machineConfig.jrytio-pve.ssh.username.tooltip"
             required
           />
         </div>
@@ -754,8 +754,8 @@ export default {
             type="number"
             :mode="mode"
             v-model:value="currentValue.sshPort"
-            label-key="cluster.machineConfig.pve.ssh.port.label"
-            tooltip-key="cluster.machineConfig.pve.ssh.port.tooltip"
+            label-key="cluster.machineConfig.jrytio-pve.ssh.port.label"
+            tooltip-key="cluster.machineConfig.jrytio-pve.ssh.port.tooltip"
             required
             min="1"
             step="1"
@@ -764,7 +764,7 @@ export default {
       </div>
 
       <h3>
-        <t k="cluster.machineConfig.pve.template.header" />
+        <t k="cluster.machineConfig.jrytio-pve.template.header" />
       </h3>
       <div class="row">
         <div class="col span-6">
@@ -772,8 +772,8 @@ export default {
           <Checkbox
             :mode="mode"
             v-model:value="currentValue.fullClone"
-            label-key="cluster.machineConfig.pve.template.cloning.label"
-            tooltip-key="cluster.machineConfig.pve.template.cloning.tooltip"
+            label-key="cluster.machineConfig.jrytio-pve.template.cloning.label"
+            tooltip-key="cluster.machineConfig.jrytio-pve.template.cloning.tooltip"
           />
         </div>
       </div>
