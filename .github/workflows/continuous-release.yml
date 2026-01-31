@@ -243,6 +243,11 @@ jobs:
           echo "Publishing to GitHub Pages for: ${GITHUB_REPOSITORY}"
           echo "This is your fork, not the upstream repository"
           
+          # Copy artifacts to temp directory before switching branches
+          mkdir -p /tmp/gh-pages-artifacts
+          cp -r ./release_artifacts /tmp/gh-pages-artifacts/
+          cp -r ./dist-pkg /tmp/gh-pages-artifacts/
+          
           # Stash any changes from build process (values.yaml and package.json modifications)
           git stash --include-untracked
           
@@ -261,13 +266,13 @@ jobs:
             git push origin gh-pages
           fi
           
-          # Now update with the new artifacts
-          helm repo index ./release_artifacts --merge ./index.yaml --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}" || helm repo index ./release_artifacts --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}"
-          cp ./release_artifacts/index.yaml ./index.yaml
+          # Now update with the new artifacts from temp directory
+          helm repo index /tmp/gh-pages-artifacts/release_artifacts --merge ./index.yaml --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}" || helm repo index /tmp/gh-pages-artifacts/release_artifacts --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${{ steps.version.outputs.release_tag }}"
+          cp /tmp/gh-pages-artifacts/release_artifacts/index.yaml ./index.yaml
           git add ./index.yaml
           
           mkdir -p "./extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/plugin"
-          cp ./dist-pkg/jrytio-pve-node-driver-${{ steps.version.outputs.version }}/* "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/plugin"
+          cp /tmp/gh-pages-artifacts/dist-pkg/jrytio-pve-node-driver-${{ steps.version.outputs.version }}/* "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/plugin"
           (cd "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}" && find * -type f | sort) > "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}/files.txt"
           git add "extensions/jrytio-pve-node-driver/${{ steps.version.outputs.version }}"
           
