@@ -48,6 +48,7 @@ export default {
       devices: null,
 
       // Current input values.
+      //Bump Version
       currentValue: {
         resourcePool: this.value.resourcePool ?? '',
         template: this.value.template ? parseInt(this.value.template) : 0,
