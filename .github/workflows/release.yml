@@ -54,7 +54,7 @@ jobs:
       - run: mkdir -p ./release_artifacts
       - name: Build driver binaries
         run: >
-          go build -o ./release_artifacts/docker-machine-driver-pve ./cmd/docker-machine-driver-pve
+          go build -o ./release_artifacts/docker-machine-driver-pve ./cmd/docker-machine-driver-jrytio-pve
           && (cd ./release_artifacts && sha256sum ./docker-machine-driver-pve > checksums.txt)
         env:
           CGO_ENABLED: 0
@@ -62,16 +62,16 @@ jobs:
           GOARCH: amd64
       - name: Build Rancher UI Extension
         run: >
-          (cd pkg/pve-node-driver && yarn version --new-version "${GITHUB_REF_NAME#v}" --no-git-tag-version)
-          && yarn build-pkg pve-node-driver
+          (cd pkg/jrytio-pve-node-driver && yarn version --new-version "${GITHUB_REF_NAME#v}" --no-git-tag-version)
+          && yarn build-pkg jrytio-pve-node-driver
       - name: Package Helm Chart
         run: >
           CHECKSUM="$(sha256sum ./release_artifacts/docker-machine-driver-pve | cut -d' ' -f1)"
-          && yq -i ".nodeDriver.url = \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/docker-machine-driver-pve\"" deploy/charts/pve-node-driver/values.yaml
-          && yq -i ".nodeDriver.checksum = \"${CHECKSUM}\"" deploy/charts/pve-node-driver/values.yaml
-          && yq -i ".uiPlugin.endpoint = \"${{ steps.pages.outputs.base_url }}/extensions/pve-node-driver/${GITHUB_REF_NAME#v}\"" deploy/charts/pve-node-driver/values.yaml
-          && cat deploy/charts/pve-node-driver/values.yaml
-          && helm package ./deploy/charts/pve-node-driver \
+          && yq -i ".nodeDriver.url = \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/docker-machine-driver-pve\"" deploy/charts/jrytio-pve-node-driver/values.yaml
+          && yq -i ".nodeDriver.checksum = \"${CHECKSUM}\"" deploy/charts/jrytio-pve-node-driver/values.yaml
+          && yq -i ".uiPlugin.endpoint = \"${{ steps.pages.outputs.base_url }}/extensions/jrytio-pve-node-driver/${GITHUB_REF_NAME#v}\"" deploy/charts/jrytio-pve-node-driver/values.yaml
+          && cat deploy/charts/jrytio-pve-node-driver/values.yaml
+          && helm package ./deploy/charts/jrytio-pve-node-driver \
               --version "${GITHUB_REF_NAME#v}" \
               --app-version "${GITHUB_REF_NAME}" \
               --destination ./release_artifacts
@@ -98,9 +98,9 @@ jobs:
           && helm repo index ./release_artifacts --merge ./index.yaml --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}"
           && cp ./release_artifacts/index.yaml ./index.yaml
           && git add ./index.yaml
-          && mkdir -p "./extensions/pve-node-driver/${GITHUB_REF_NAME#v}/plugin"
-          && cp ./dist-pkg/pve-node-driver-${GITHUB_REF_NAME#v}/* "extensions/pve-node-driver/${GITHUB_REF_NAME#v}/plugin"
-          && (cd "extensions/pve-node-driver/${GITHUB_REF_NAME#v}" && find * -type f | sort) > "extensions/pve-node-driver/${GITHUB_REF_NAME#v}/files.txt"
-          && git add "extensions/pve-node-driver/${GITHUB_REF_NAME#v}"
+          && mkdir -p "./extensions/jrytio-pve-node-driver/${GITHUB_REF_NAME#v}/plugin"
+          && cp ./dist-pkg/jrytio-pve-node-driver-${GITHUB_REF_NAME#v}/* "extensions/jrytio-pve-node-driver/${GITHUB_REF_NAME#v}/plugin"
+          && (cd "extensions/jrytio-pve-node-driver/${GITHUB_REF_NAME#v}" && find * -type f | sort) > "extensions/jrytio-pve-node-driver/${GITHUB_REF_NAME#v}/files.txt"
+          && git add "extensions/jrytio-pve-node-driver/${GITHUB_REF_NAME#v}"
           && git commit -m "chore: update Helm repo index for ${GITHUB_REF_NAME}"
           && git push origin gh-pages
